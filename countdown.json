@@ -1,0 +1,163 @@
+// Usage:
+// Bind to a Text Layer, Text Property (to the right of where you can enter text, click on the gear/cog icon and select bind script). Compile the script to ensure Script Properties show up in editor. Run Scripts to view live in editor or Apply Wallpaper to view live on Desktop.
+
+'use strict';
+
+export let __workshopId = '2143423927';
+
+export var scriptProperties = createScriptProperties()
+	// The time that the coutdown will end on.
+	.addText({
+		name: 'date',
+		label: 'ui_editor_properties_date',
+		value: '2020-12-25T00:00:00'
+	})
+	// Whether the year should be ignored.
+	.addCheckbox({
+		name: 'recurring',
+		label: 'ui_editor_properties_recurring',
+		value: true
+	})
+	// This text will be shown for non-recurring countdowns after they concluded.
+	.addCheckbox({
+		name: 'finalMessage',
+		label: 'ui_editor_properties_end_message',
+		value: 'The countdown finished!'
+	})
+	.addCheckbox({
+		name: 'showMinutes',
+		label: 'Show Minutes',
+		value: false
+	})
+	.addCheckbox({
+		name: 'showMinutes0',
+		label: 'Show Minutes On Day Zero Only',
+		value: false
+	})
+	.addCheckbox({
+		name: 'showSeconds',
+		label: 'Show Seconds',
+		value: false
+	})
+	.addCheckbox({
+		name: 'showSeconds0',
+		label: 'Show Seconds On Day Zero Only',
+		value: false
+	})
+	.addCheckbox({
+		name: 'countUp',
+		label: 'Count Up ',
+		value: false
+	})
+	.addCheckbox({
+		name: 'alignVertical',
+		label: 'Align Vertically',
+		value: false
+	})
+	.addCheckbox({
+		name: 'useDelimiter',
+		label: 'Use Delimiter',
+		value: false
+	})
+	.addText({
+		name: 'addDelimiter',
+		label: 'Delimiter',
+		value: ', '
+	})
+	.finish();
+
+/**
+ * @param {String} value (for property 'text')
+ */
+var newLine;
+var delimiterValue;
+var originalText;
+export function update(value) {
+	if (scriptProperties.useDelimiter == true){
+  delimiterValue = scriptProperties.addDelimiter
+}
+  if (scriptProperties.useDelimiter == false){
+   delimiterValue = [
+  ' '
+]
+}
+if (scriptProperties.alignVertical == true){
+   newLine = [
+  '\n'
+]
+}
+if (scriptProperties.alignVertical == false){
+   newLine = [
+  ''
+]
+}
+	var currentDate = new Date();
+	var targetDate = new Date(scriptProperties.date);
+	var isRecurringEachYear = scriptProperties.recurring;
+	var isCountUp  = scriptProperties.countUp;
+	if (isRecurringEachYear && isCountUp) {
+		currentDate.setUTCFullYear(targetDate.getUTCFullYear());
+		if ((currentDate.getTime() - targetDate.getTime()) < 0) {
+			currentDate.setUTCFullYear(targetDate.getUTCFullYear() + 1);
+		}
+	}
+	else if (isRecurringEachYear) {
+		targetDate.setUTCFullYear(currentDate.getUTCFullYear());
+		if ((targetDate.getTime() - currentDate.getTime()) < 0) {
+			targetDate.setUTCFullYear(currentDate.getUTCFullYear() + 1);
+		}
+	}
+	if (isCountUp) {
+		var diff = currentDate.getTime() - targetDate.getTime();
+	}
+	else { diff = targetDate.getTime() - currentDate.getTime();
+	}
+	if (!isRecurringEachYear
+		&& diff < 0) {
+		return scriptProperties.finalMessage;
+	}
+
+	var years = Math.floor(diff / (1000 * 60 * 60 * 24 * 365));
+	var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+	var hours = Math.floor(diff / (1000 * 60 * 60)) % 24;
+	var minutes = Math.floor(diff / (1000 * 60)) % 60;
+	var seconds = Math.floor(diff / (1000)) % 60;
+
+	if (!isRecurringEachYear) {
+		days %= 365;
+	}
+
+	value = originalText + '\n';
+
+	if (years > 0 && !isRecurringEachYear) {
+		value += years + ' years'+ delimiterValue + newLine;
+	}
+	if (days > 0) {
+		value += ' ' + days + ' days'+ delimiterValue + newLine;
+	}
+	
+	value += ' ' + hours + ' hours'; 
+
+	if (scriptProperties.showMinutes0 == true && days == 0) {
+	 	value += delimiterValue + newLine + ' ' + minutes + ' minutes';
+	}
+	else if (scriptProperties.showMinutes == true) {
+		value += delimiterValue + newLine + ' ' + minutes + ' minutes';
+	}
+	
+	if (scriptProperties.showSeconds0 == true && days == 0) {
+	 	value += delimiterValue + newLine + ' ' + seconds + ' seconds';
+	}
+	else if (scriptProperties.showSeconds == true) {
+		value += delimiterValue + newLine + ' ' + seconds + ' seconds';
+	}
+	return value;
+}
+
+/**
+ * @param {String} value (for property 'text')
+ */
+export function init(value) {
+	originalText = value;
+	return value;
+}
